@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin Panel</h2>
+<div class="form-box">
+    <h3>Create New User</h3>
+    <form method="post">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="is_admin"> Administrator</label>
+            <label><input type="checkbox" name="is_staff"> Staff Member</label>
+        </div>
+        <button type="submit">Create User</button>
+    </form>
+</div>
+{% endblock %}

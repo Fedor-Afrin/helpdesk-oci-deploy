@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Service Desk Dashboard</h2>
+
+<div class="create-box" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #dee2e6;">
+    <h3 style="margin-top: 0;">Create New Ticket</h3>
+    <form action="{{ url_for('create_ticket') }}" method="post">
+        <input type="text" name="title" placeholder="Problem title" required style="width: 100%; margin-bottom: 10px; padding: 8px;">
+        <textarea name="description" placeholder="Description" style="width: 100%; margin-bottom: 10px; padding: 8px;"></textarea>
+        <button type="submit" class="btn-primary">🚀 Create Ticket</button>
+    </form>
+</div>
+
+<table class="tickets-table" style="width: 100%; border-collapse: collapse;">
+    <thead style="background: #343a40; color: white;">
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Creator</th>
+            <th>Assignee</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets %}
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td>#{{ ticket.get('id') }}</td>
+            <td>
+                <strong>{{ ticket.get('title') }}</strong><br>
+                <small style="color: gray;">{{ ticket.get('created_at', '')[:16] }}</small>
+            </td>
+            <td>
+                {# Безопасное получение имени создателя #}
+                👤 {{ ticket.get('creator', {}).get('username', 'System') if ticket.get('creator') else 'System' }}
+            </td>
+            <td>
+                {# Безопасное получение исполнителя #}
+                {% if ticket.get('assignee') %}
+                    <span style="color: #28a745; font-weight: bold;">🛠 {{ ticket['assignee'].get('username') }}</span>
+                {% else %}
+                    <span style="color: gray; font-style: italic;">Waiting...</span>
+                {% endif %}
+            </td>
+            <td><span class="badge {{ ticket.get('status') }}">{{ ticket.get('status') }}</span></td>
+            <td>
+                <a href="{{ url_for('ticket_detail', ticket_id=ticket.get('id')) }}" class="btn-small">Open</a>
+                {% if session.get('is_admin') %}
+                <form action="{{ url_for('delete_ticket', ticket_id=ticket.get('id')) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn-danger" onclick="return confirm('Delete?')">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<style>
+    .badge.new { background: #007bff; color: white; padding: 4px 8px; border-radius: 4px; }
+    .badge.in_progress { background: #ffc107; padding: 4px 8px; border-radius: 4px; }
+    .badge.closed { background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; }
+    th, td { padding: 12px; text-align: left; }
+</style>
+{% endblock %}
