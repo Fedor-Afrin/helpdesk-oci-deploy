@@ -16,3 +16,9 @@ frontend:
   replicaCount: 1
   containerPort: 5000
   serviceType: LoadBalancer # Для Oracle Cloud, чтобы получить внешний IP
+
+  database:
+  image: postgres:15-alpine # Или ту версию, которую ты использовал
+  storageSize: 10Gi
+  storageClass: oci-bv     # Стандартный класс дисков в Oracle Cloud
+  port: 5432
