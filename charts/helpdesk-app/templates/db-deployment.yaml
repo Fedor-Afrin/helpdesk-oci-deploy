@@ -8,7 +8,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.database.storageSize }}
+      storage: {{ .Values.database.storageSize | default "10Gi" }}
   storageClassName: {{ .Values.database.storageClass }}
 ---
 # 2. Сама база данных
