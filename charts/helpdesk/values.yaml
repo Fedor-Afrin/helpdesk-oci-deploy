@@ -1,0 +1,13 @@
+global:
+  cloud: oracle
+
+backend:
+  image: "fra.ocir.io/your-namespace/helpdesk-backend:latest" # Заменим на твой регион и неймспейс
+  replicas: 2
+
+database:
+  storageClass: oci-bv
+  size: 10Gi
+
+frontend:
+  serviceType: LoadBalancer

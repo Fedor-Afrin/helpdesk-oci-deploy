@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="ticket-header">
+    <a href="{{ url_for('dashboard') }}">← Back</a>
+    <h2>#{{ ticket.id }} {{ ticket.title }}</h2>
+    <p><strong>Created at:</strong> {{ ticket.created_at[:16]|replace('T', ' ') if ticket.created_at else '-' }}</p>
+    <p>{{ ticket.description }}</p>
+    <p>Current Status: <span class="badge {{ ticket.status }}">{{ ticket.status }}</span></p>
+</div>
+
+{% if session.is_staff or session.is_admin %}
+<div class="status-update-box">
+    <h4>Update Status</h4>
+    <form action="{{ url_for('update_ticket', ticket_id=ticket.id) }}" method="post">
+        <select name="status">
+            <option value="new" {% if ticket.status == 'new' %}selected{% endif %}>New</option>
+            <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="closed" {% if ticket.status == 'closed' %}selected{% endif %}>Closed</option>
+        </select>
+        <button type="submit" class="btn-primary">Update Status</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="reports-section">
+    <h3>Work Reports & Files</h3>
+    
+    {% for report in reports %}
+    <div class="report-card">
+        <p>{{ report.comment }}</p>
+        {% if report.file_path %}
+            <a href="{{ url_for('serve_media', filename=report.file_path) }}" target="_blank">📎 Download File</a>
+        {% endif %}
+        <small>{{ report.created_at[:16]|replace('T', ' ') if report.created_at else '' }}</small>
+    </div>
+    {% else %}
+        <p>No reports yet.</p>
+    {% endfor %}
+
+    <div class="add-report">
+        <h4>Add Report</h4>
+        <form action="{{ url_for('add_report', ticket_id=ticket.id) }}" method="post" enctype="multipart/form-data">
+            <textarea name="comment" placeholder="Work done..." required></textarea>
+            <input type="file" name="file">
+            <button type="submit">Add Report</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
