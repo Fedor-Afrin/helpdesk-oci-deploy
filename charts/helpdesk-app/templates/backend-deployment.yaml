@@ -20,4 +20,4 @@ spec:
           env:
             - name: DATABASE_URL
               # Исправили admin -> postgres
-              value: "postgresql://postgres:password123@{{ .Release.Name }}-db-svc:5432/helpdesk"
+              value: "postgresql://postgres:mypassword@{{ .Release.Name }}-db-svc:5432/helpdesk"
