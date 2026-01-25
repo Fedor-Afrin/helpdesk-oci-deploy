@@ -1,0 +1,18 @@
+# Общие настройки для Oracle Cloud
+global:
+  storageClass: oci-bv
+
+# Настройки Бэкенда (FastAPI)
+backend:
+  repository: fedorafrin85/sd-api
+  tag: "v2"
+  replicaCount: 1
+  containerPort: 8000
+
+# Настройки Фронтенда (Flask)
+frontend:
+  repository: fedorafrin85/service-desk-frontend
+  tag: "v1"
+  replicaCount: 1
+  containerPort: 5000
+  serviceType: LoadBalancer # Для Oracle Cloud, чтобы получить внешний IP
