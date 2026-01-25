@@ -1,6 +1,8 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # Убрали пробел: теперь имя будет вроде "release-name-backend"
   name: {{ .Release.Name }}-backend
 spec:
   replicas: {{ .Values.backend.replicaCount }}
