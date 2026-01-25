@@ -19,4 +19,5 @@ spec:
             - containerPort: {{ .Values.backend.containerPort }}
           env:
             - name: DATABASE_URL
-              value: "postgresql://admin:password123@{{ .Release.Name }}-db-svc:5432/helpdesk"
+              # Исправили admin -> postgres
+              value: "postgresql://postgres:password123@{{ .Release.Name }}-db-svc:5432/helpdesk"
