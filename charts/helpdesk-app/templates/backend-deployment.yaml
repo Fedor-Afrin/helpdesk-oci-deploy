@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-backend
 spec:
-  replicas: 1  # <--- ВАЖНО: Для Block Volume (RWO) реплика должна быть строго одна
+  # Используем переменную, но помни: для Block Volume в values.yaml должно быть строго 1!
+  replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
       app: helpdesk-backend
@@ -19,14 +20,15 @@ spec:
             - containerPort: {{ .Values.backend.containerPort }}
           env:
             - name: DATABASE_URL
+              # Твоя исправленная строка подключения:
               value: "postgresql://postgres:mypassword@{{ .Release.Name }}-db-svc:5432/helpdesk"
           
-          # 👇 1. Сюда монтируем диск (внутри контейнера)
+          # 👇 1. Монтируем диск (ИСПРАВИЛ ПУТЬ на /app/media, как в твоем коде!)
           volumeMounts:
             - name: data-storage
-              mountPath: /app/uploads   # ⚠️ ВАЖНО: Убедись, что твой Python сохраняет файлы именно сюда!
+              mountPath: /app/media
               
-      # 👇 2. Здесь берем диск из Kubernetes
+      # 👇 2. Подключаем PVC диск
       volumes:
         - name: data-storage
           persistentVolumeClaim:
