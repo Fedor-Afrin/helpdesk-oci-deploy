@@ -1,22 +1,13 @@
-# 1. Добавляем "драйвер" для сетевых папок (OCI File Storage)
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: oci-fss
-provisioner: file.csi.oraclecloud.com
-reclaimPolicy: Delete
-volumeBindingMode: Immediate
-allowVolumeExpansion: true
----
-# 2. Заказываем общий диск на 50 ГБ
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: helpdesk-shared-pvc
+  name: {{ .Release.Name }}-shared-pvc
+  labels:
+    app: {{ .Release.Name }}
 spec:
   accessModes:
-    - ReadWriteMany      # <--- Это самое главное! (Доступ для всех сразу)
-  storageClassName: oci-fss
+    - ReadWriteOnce      # <--- ВАЖНО: Меняем на RWO (доступ для одного узла)
+  storageClassName: oci-bv # <--- ВАЖНО: Используем рабочий драйвер Block Volume
   resources:
     requests:
       storage: 50Gi
