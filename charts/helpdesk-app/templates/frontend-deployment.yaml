@@ -17,6 +17,16 @@ spec:
           image: "{{ .Values.frontend.repository }}:{{ .Values.frontend.tag }}"
           ports:
             - containerPort: {{ .Values.frontend.containerPort }}
+
+          readinessProbe:
+            httpGet:
+              path: /login    # <--- Проверяем именно /login
+              port: {{ .Values.frontend.containerPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3  
           # --- ДОБАВЬ ЭТОТ БЛОК (ENV) ---
           env:
             - name: BACKEND_URL
