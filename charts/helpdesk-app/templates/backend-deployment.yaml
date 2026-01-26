@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-backend
 spec:
-  replicas: {{ .Values.backend.replicaCount }}
+  replicas: 1  # <--- ВАЖНО: Для Block Volume (RWO) реплика должна быть строго одна
   selector:
     matchLabels:
       app: helpdesk-backend
@@ -19,5 +19,15 @@ spec:
             - containerPort: {{ .Values.backend.containerPort }}
           env:
             - name: DATABASE_URL
-              # Исправили admin -> postgres
               value: "postgresql://postgres:REDACTED_SECRET@{{ .Release.Name }}-db-svc:5432/helpdesk"
+          
+          # 👇 1. Сюда монтируем диск (внутри контейнера)
+          volumeMounts:
+            - name: data-storage
+              mountPath: /app/uploads   # ⚠️ ВАЖНО: Убедись, что твой Python сохраняет файлы именно сюда!
+              
+      # 👇 2. Здесь берем диск из Kubernetes
+      volumes:
+        - name: data-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-shared-pvc
