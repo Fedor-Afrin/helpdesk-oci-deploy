@@ -20,7 +20,6 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         try:
-            # Стучимся в Бэкенд для проверки пароля
             resp = requests.post(f"{BACKEND_URL}/auth/login", json={"username": username, "password": password})
             if resp.status_code == 200:
                 user = resp.json()
@@ -59,6 +58,45 @@ def dashboard():
         
     return render_template('dashboard.html', tickets=tickets, user=session)
 
+# --- ДОБАВЛЕНО: Функция создания тикета ---
+@app.route('/create_ticket', methods=['POST'])
+def create_ticket():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    title = request.form.get('title')
+    description = request.form.get('description')
+    
+    data = {
+        "title": title,
+        "description": description,
+        "creator_id": session['user_id']
+    }
+    
+    try:
+        requests.post(f"{BACKEND_URL}/tickets/", json=data)
+        flash('Ticket created!', 'success')
+    except:
+        flash('Error creating ticket', 'error')
+        
+    return redirect(url_for('dashboard'))
+# ------------------------------------------
+
+# --- ДОБАВЛЕНО: Функция удаления тикета ---
+@app.route('/ticket/<int:ticket_id>/delete', methods=['POST'])
+def delete_ticket(ticket_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    try:
+        requests.delete(f"{BACKEND_URL}/tickets/{ticket_id}")
+        flash('Ticket deleted', 'success')
+    except:
+        flash('Error deleting ticket', 'error')
+        
+    return redirect(url_for('dashboard'))
+# ------------------------------------------
+
 @app.route('/ticket/<int:ticket_id>')
 def ticket_detail(ticket_id):
     if 'user_id' not in session:
@@ -82,7 +120,6 @@ def add_report(ticket_id):
     comment = request.form.get('comment')
     file = request.files.get('file')
     
-    # Подготовка файла для отправки на Бэкенд
     files = {'file': (file.filename, file.read())} if file and file.filename else None
     data = {'comment': comment}
     
@@ -94,10 +131,8 @@ def add_report(ticket_id):
         
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 
-# --- ВОТ ЭТОГО БЛОКА НЕ ХВАТАЛО ---
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    # Проверка: пускаем только админов
     if 'user_id' not in session or not session.get('is_admin'):
         return redirect(url_for('dashboard'))
     
@@ -124,23 +159,19 @@ def admin():
             flash('Backend connection failed', 'error')
 
     return render_template('admin.html')
-# -----------------------------------
 
 @app.route('/media/<path:filename>')
 def serve_media(filename):
     if 'user_id' not in session:
         return "Unauthorized", 401
     
-    # Читаем настройки из переменных окружения
     namespace = os.getenv('OCI_NAMESPACE')
     bucket_name = os.getenv('OCI_BUCKET_NAME')
     region = os.getenv('OCI_REGION', 'il-jerusalem-1')
 
-    # Если переменных нет — значит конфиг не прилетел из Kubernetes
     if not namespace or not bucket_name:
         return "Error: Cloud storage configuration is missing in Frontend Pod", 500
     
-    # Редирект в облако Oracle
     oci_url = f"https://objectstorage.{region}.oraclecloud.com/n/{namespace}/b/{bucket_name}/o/{filename}"
     return redirect(oci_url)
 
