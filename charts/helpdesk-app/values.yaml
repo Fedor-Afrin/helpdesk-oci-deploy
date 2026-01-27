@@ -5,7 +5,7 @@ global:
 # Настройки Бэкенда (FastAPI)
 backend:
   repository: fedorafrin85/helpdesk-backend
-  tag: "v2"
+  tag: "v3"
   replicaCount: 1
   containerPort: 8000
 
