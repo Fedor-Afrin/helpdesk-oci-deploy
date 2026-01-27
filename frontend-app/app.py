@@ -5,6 +5,7 @@ import requests
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret')
 
+# Получаем URL бэкенда из переменных окружения
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
 
 @app.route('/')
@@ -19,6 +20,7 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         try:
+            # Стучимся в Бэкенд для проверки пароля
             resp = requests.post(f"{BACKEND_URL}/auth/login", json={"username": username, "password": password})
             if resp.status_code == 200:
                 user = resp.json()
@@ -29,8 +31,8 @@ def login():
                 return redirect(url_for('dashboard'))
             else:
                 flash('Invalid credentials', 'error')
-        except:
-            flash('Backend unavailable', 'error')
+        except Exception as e:
+            flash(f'Backend unavailable: {str(e)}', 'error')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -42,57 +44,104 @@ def logout():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
     params = {
         'user_id': session['user_id'],
         'is_admin': session['is_admin'],
         'is_staff': session.get('is_staff', False)
     }
-    resp = requests.get(f"{BACKEND_URL}/tickets/", params=params)
-    tickets = resp.json() if resp.status_code == 200 else []
+    try:
+        resp = requests.get(f"{BACKEND_URL}/tickets/", params=params)
+        tickets = resp.json() if resp.status_code == 200 else []
+    except:
+        tickets = []
+        flash('Error connecting to backend', 'error')
+        
     return render_template('dashboard.html', tickets=tickets, user=session)
 
 @app.route('/ticket/<int:ticket_id>')
 def ticket_detail(ticket_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    t_resp = requests.get(f"{BACKEND_URL}/tickets/{ticket_id}")
-    r_resp = requests.get(f"{BACKEND_URL}/tickets/{ticket_id}/reports")
-    if t_resp.status_code != 200:
-        return "Not Found", 404
-    return render_template('ticket_detail.html', ticket=t_resp.json(), reports=r_resp.json())
+    try:
+        t_resp = requests.get(f"{BACKEND_URL}/tickets/{ticket_id}")
+        r_resp = requests.get(f"{BACKEND_URL}/tickets/{ticket_id}/reports")
+        
+        if t_resp.status_code != 200:
+            return "Ticket Not Found", 404
+            
+        return render_template('ticket_detail.html', ticket=t_resp.json(), reports=r_resp.json())
+    except:
+        return "Backend Error", 500
 
 @app.route('/ticket/<int:ticket_id>/add_report', methods=['POST'])
 def add_report(ticket_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
     comment = request.form.get('comment')
     file = request.files.get('file')
-    # Фронтенд просто пересылает файл в бэкенд, а тот загрузит в S3
+    
+    # Подготовка файла для отправки на Бэкенд
     files = {'file': (file.filename, file.read())} if file and file.filename else None
     data = {'comment': comment}
-    requests.post(f"{BACKEND_URL}/tickets/{ticket_id}/reports", data=data, files=files)
-    flash('Report added', 'success')
+    
+    try:
+        requests.post(f"{BACKEND_URL}/tickets/{ticket_id}/reports", data=data, files=files)
+        flash('Report added', 'success')
+    except:
+        flash('Error adding report', 'error')
+        
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
+
+# --- ВОТ ЭТОГО БЛОКА НЕ ХВАТАЛО ---
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    # Проверка: пускаем только админов
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        role = request.form.get('role')
+        
+        is_admin = (role == 'admin')
+        is_staff = (role == 'staff')
+
+        try:
+            resp = requests.post(f"{BACKEND_URL}/auth/register", json={
+                "username": username,
+                "password": password,
+                "is_admin": is_admin,
+                "is_staff": is_staff
+            })
+            if resp.status_code == 200:
+                flash('User created successfully', 'success')
+            else:
+                flash(f'Error creating user: {resp.text}', 'error')
+        except:
+            flash('Backend connection failed', 'error')
+
+    return render_template('admin.html')
+# -----------------------------------
 
 @app.route('/media/<path:filename>')
 def serve_media(filename):
     if 'user_id' not in session:
         return "Unauthorized", 401
     
-    # Читаем настройки Object Storage из переменных окружения
+    # Читаем настройки из переменных окружения
     namespace = os.getenv('OCI_NAMESPACE')
     bucket_name = os.getenv('OCI_BUCKET_NAME')
     region = os.getenv('OCI_REGION', 'il-jerusalem-1')
 
-    # Если переменных нет — значит что-то пошло не так с конфигом
+    # Если переменных нет — значит конфиг не прилетел из Kubernetes
     if not namespace or not bucket_name:
-        return "Cloud storage configuration missing", 500
+        return "Error: Cloud storage configuration is missing in Frontend Pod", 500
     
-    # Формируем публичную ссылку на файл в облаке Oracle
-    # Пример: https://objectstorage.il-jerusalem-1.oraclecloud.com/n/axm70tntbzcm/b/helpdesk-storage/o/tickets/1/image.png
+    # Редирект в облако Oracle
     oci_url = f"https://objectstorage.{region}.oraclecloud.com/n/{namespace}/b/{bucket_name}/o/{filename}"
-    
-    # Перенаправляем пользователя (Redirect 302) прямо на картинку
     return redirect(oci_url)
 
 if __name__ == '__main__':
