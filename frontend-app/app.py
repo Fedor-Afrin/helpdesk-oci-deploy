@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret')
 
-# Получаем URL бэкенда из переменных окружения
+# Получаем URL бэкенда
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
 
 @app.route('/')
@@ -58,7 +58,7 @@ def dashboard():
         
     return render_template('dashboard.html', tickets=tickets, user=session)
 
-# --- ДОБАВЛЕНО: Функция создания тикета ---
+# --- Создание тикета ---
 @app.route('/create_ticket', methods=['POST'])
 def create_ticket():
     if 'user_id' not in session:
@@ -80,9 +80,8 @@ def create_ticket():
         flash('Error creating ticket', 'error')
         
     return redirect(url_for('dashboard'))
-# ------------------------------------------
 
-# --- ДОБАВЛЕНО: Функция удаления тикета ---
+# --- Удаление тикета ---
 @app.route('/ticket/<int:ticket_id>/delete', methods=['POST'])
 def delete_ticket(ticket_id):
     if 'user_id' not in session:
@@ -95,7 +94,22 @@ def delete_ticket(ticket_id):
         flash('Error deleting ticket', 'error')
         
     return redirect(url_for('dashboard'))
-# ------------------------------------------
+
+# --- (НОВОЕ) Обновление статуса тикета ---
+@app.route('/ticket/<int:ticket_id>/update', methods=['POST'])
+def update_ticket(ticket_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    status = request.form.get('status')
+    try:
+        requests.put(f"{BACKEND_URL}/tickets/{ticket_id}", json={"status": status})
+        flash('Status updated', 'success')
+    except:
+        flash('Error updating status', 'error')
+        
+    return redirect(url_for('ticket_detail', ticket_id=ticket_id))
+# -----------------------------------------
 
 @app.route('/ticket/<int:ticket_id>')
 def ticket_detail(ticket_id):
@@ -109,8 +123,9 @@ def ticket_detail(ticket_id):
             return "Ticket Not Found", 404
             
         return render_template('ticket_detail.html', ticket=t_resp.json(), reports=r_resp.json())
-    except:
-        return "Backend Error", 500
+    except Exception as e:
+        # Для отладки вернем текст ошибки, если что-то опять пойдет не так
+        return f"Frontend Error: {str(e)}", 500
 
 @app.route('/ticket/<int:ticket_id>/add_report', methods=['POST'])
 def add_report(ticket_id):
@@ -170,7 +185,7 @@ def serve_media(filename):
     region = os.getenv('OCI_REGION', 'il-jerusalem-1')
 
     if not namespace or not bucket_name:
-        return "Error: Cloud storage configuration is missing in Frontend Pod", 500
+        return "Error: Cloud storage configuration is missing", 500
     
     oci_url = f"https://objectstorage.{region}.oraclecloud.com/n/{namespace}/b/{bucket_name}/o/{filename}"
     return redirect(oci_url)
