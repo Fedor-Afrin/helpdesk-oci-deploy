@@ -88,25 +88,38 @@ def delete_ticket(ticket_id):
         return redirect(url_for('login'))
         
     try:
-        requests.delete(f"{BACKEND_URL}/tickets/{ticket_id}")
+        # Для удаления тоже нужно передавать, кто удаляет (админ)
+        params = {'user_id': session['user_id'], 'is_admin': session['is_admin']}
+        requests.delete(f"{BACKEND_URL}/tickets/{ticket_id}", params=params)
         flash('Ticket deleted', 'success')
     except:
         flash('Error deleting ticket', 'error')
         
     return redirect(url_for('dashboard'))
 
-# --- (НОВОЕ) Обновление статуса тикета ---
+# --- Обновление статуса тикета (ИСПРАВЛЕНО) ---
 @app.route('/ticket/<int:ticket_id>/update', methods=['POST'])
 def update_ticket(ticket_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     status = request.form.get('status')
+    
+    # ВАЖНО: Передаем user_id в параметрах, иначе Бэкенд вернет ошибку 422
+    params = {
+        'user_id': session['user_id'],
+        'is_admin': session['is_admin'],
+        'is_staff': session.get('is_staff', False)
+    }
+    
     try:
-        requests.put(f"{BACKEND_URL}/tickets/{ticket_id}", json={"status": status})
-        flash('Status updated', 'success')
+        resp = requests.put(f"{BACKEND_URL}/tickets/{ticket_id}", json={"status": status}, params=params)
+        if resp.status_code == 200:
+            flash('Status updated', 'success')
+        else:
+            flash(f'Error updating status: {resp.text}', 'error')
     except:
-        flash('Error updating status', 'error')
+        flash('Network error updating status', 'error')
         
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 # -----------------------------------------
@@ -124,8 +137,8 @@ def ticket_detail(ticket_id):
             
         return render_template('ticket_detail.html', ticket=t_resp.json(), reports=r_resp.json())
     except Exception as e:
-        # Для отладки вернем текст ошибки, если что-то опять пойдет не так
-        return f"Frontend Error: {str(e)}", 500
+        # Если ты увидишь этот текст на экране, значит код ОБНОВИЛСЯ успешно
+        return f"Frontend Error (v7): {str(e)}", 500
 
 @app.route('/ticket/<int:ticket_id>/add_report', methods=['POST'])
 def add_report(ticket_id):
