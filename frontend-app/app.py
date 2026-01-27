@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret')
 
-# Получаем URL бэкенда из переменных окружения
+# Получаем URL бэкенда
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
 
 @app.route('/')
@@ -58,7 +58,7 @@ def dashboard():
         
     return render_template('dashboard.html', tickets=tickets, user=session)
 
-# --- ДОБАВЛЕНО: Функция создания тикета ---
+# --- Создание тикета ---
 @app.route('/create_ticket', methods=['POST'])
 def create_ticket():
     if 'user_id' not in session:
@@ -80,22 +80,49 @@ def create_ticket():
         flash('Error creating ticket', 'error')
         
     return redirect(url_for('dashboard'))
-# ------------------------------------------
 
-# --- ДОБАВЛЕНО: Функция удаления тикета ---
+# --- Удаление тикета ---
 @app.route('/ticket/<int:ticket_id>/delete', methods=['POST'])
 def delete_ticket(ticket_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
     try:
-        requests.delete(f"{BACKEND_URL}/tickets/{ticket_id}")
+        # Для удаления тоже нужно передавать, кто удаляет (админ)
+        params = {'user_id': session['user_id'], 'is_admin': session['is_admin']}
+        requests.delete(f"{BACKEND_URL}/tickets/{ticket_id}", params=params)
         flash('Ticket deleted', 'success')
     except:
         flash('Error deleting ticket', 'error')
         
     return redirect(url_for('dashboard'))
-# ------------------------------------------
+
+# --- Обновление статуса тикета (ИСПРАВЛЕНО) ---
+@app.route('/ticket/<int:ticket_id>/update', methods=['POST'])
+def update_ticket(ticket_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    status = request.form.get('status')
+    
+    # ВАЖНО: Передаем user_id в параметрах, иначе Бэкенд вернет ошибку 422
+    params = {
+        'user_id': session['user_id'],
+        'is_admin': session['is_admin'],
+        'is_staff': session.get('is_staff', False)
+    }
+    
+    try:
+        resp = requests.put(f"{BACKEND_URL}/tickets/{ticket_id}", json={"status": status}, params=params)
+        if resp.status_code == 200:
+            flash('Status updated', 'success')
+        else:
+            flash(f'Error updating status: {resp.text}', 'error')
+    except:
+        flash('Network error updating status', 'error')
+        
+    return redirect(url_for('ticket_detail', ticket_id=ticket_id))
+# -----------------------------------------
 
 @app.route('/ticket/<int:ticket_id>')
 def ticket_detail(ticket_id):
@@ -109,8 +136,9 @@ def ticket_detail(ticket_id):
             return "Ticket Not Found", 404
             
         return render_template('ticket_detail.html', ticket=t_resp.json(), reports=r_resp.json())
-    except:
-        return "Backend Error", 500
+    except Exception as e:
+        # Если ты увидишь этот текст на экране, значит код ОБНОВИЛСЯ успешно
+        return f"Frontend Error (v7): {str(e)}", 500
 
 @app.route('/ticket/<int:ticket_id>/add_report', methods=['POST'])
 def add_report(ticket_id):
@@ -170,7 +198,7 @@ def serve_media(filename):
     region = os.getenv('OCI_REGION', 'il-jerusalem-1')
 
     if not namespace or not bucket_name:
-        return "Error: Cloud storage configuration is missing in Frontend Pod", 500
+        return "Error: Cloud storage configuration is missing", 500
     
     oci_url = f"https://objectstorage.{region}.oraclecloud.com/n/{namespace}/b/{bucket_name}/o/{filename}"
     return redirect(oci_url)

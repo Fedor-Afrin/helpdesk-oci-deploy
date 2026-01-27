@@ -8,14 +8,14 @@ from app import crud, schemas
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
-# Конфигурация OCI Object Storage (Берем из переменных окружения)
+# Конфигурация OCI Object Storage
 OCI_ACCESS_KEY = os.getenv('OCI_ACCESS_KEY')
 OCI_SECRET_KEY = os.getenv('OCI_SECRET_KEY')
 OCI_REGION = os.getenv('OCI_REGION', 'il-jerusalem-1')
 OCI_NAMESPACE = os.getenv('OCI_NAMESPACE')
 OCI_BUCKET_NAME = os.getenv('OCI_BUCKET_NAME')
 
-# Инициализация клиента S3 для Oracle Cloud
+# Инициализация клиента S3
 s3_client = boto3.client(
     's3',
     aws_access_key_id=OCI_ACCESS_KEY,
@@ -87,12 +87,19 @@ def add_report(
     if file:
         file_path = f"tickets/{ticket_id}/{file.filename}"
         try:
-            # Загружаем файл напрямую в бакет Oracle Object Storage
+            # --- ИЗМЕНЕНИЕ: Добавляем метаданные файла (ContentType) ---
+            extra_args = {
+                'ContentType': file.content_type,   # Говорит браузеру, что это за файл (картинка, PDF и т.д.)
+                'ContentDisposition': 'inline'      # Говорит браузеру: "Открой меня, а не скачивай"
+            }
+            
             s3_client.upload_fileobj(
                 file.file,
                 OCI_BUCKET_NAME,
-                file_path
+                file_path,
+                ExtraArgs=extra_args
             )
+            # -----------------------------------------------------------
         except Exception as e:
             print(f"Error uploading to OCI: {e}")
             raise HTTPException(status_code=500, detail="Could not upload file to cloud storage")
