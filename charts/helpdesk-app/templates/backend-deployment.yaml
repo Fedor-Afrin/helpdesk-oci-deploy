@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-backend
 spec:
-  # Используем переменную, но помни: для Block Volume в values.yaml должно быть строго 1!
+  # Теперь можно ставить больше 1, так как Object Storage это позволяет!
   replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
@@ -20,16 +20,31 @@ spec:
             - containerPort: {{ .Values.backend.containerPort }}
           env:
             - name: DATABASE_URL
-              # Твоя исправленная строка подключения:
               value: "postgresql://postgres:mypassword@{{ .Release.Name }}-db-svc:5432/helpdesk"
-          
-          # 👇 1. Монтируем диск (ИСПРАВИЛ ПУТЬ на /app/media, как в твоем коде!)
-          volumeMounts:
-            - name: data-storage
-              mountPath: /app/media
-              
-      # 👇 2. Подключаем PVC диск
-      volumes:
-        - name: data-storage
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-shared-pvc
+            
+            # Берем данные из твоего секрета helpdesk-oci-secrets
+            - name: OCI_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: access_key
+            - name: OCI_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: secret_key
+            - name: OCI_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: namespace
+            - name: OCI_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: bucket_name
+            - name: OCI_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: region

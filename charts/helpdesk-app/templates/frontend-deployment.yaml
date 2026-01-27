@@ -18,7 +18,7 @@ spec:
           ports:
             - containerPort: {{ .Values.frontend.containerPort }}
           
-          # 1. Проверка здоровья для Kubernetes (внутри кластера)
+          # Проверка здоровья
           readinessProbe:
             httpGet:
               path: /login
@@ -29,10 +29,26 @@ spec:
             successThreshold: 1
             failureThreshold: 3
 
-          # 2. Переменная для связи с Бэкендом
           env:
             - name: BACKEND_URL
               value: "http://{{ .Release.Name }}-backend-svc:8000"
+            
+            # --- НОВЫЙ БЛОК: Данные для редиректа в облако ---
+            - name: OCI_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: namespace
+            - name: OCI_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: bucket_name
+            - name: OCI_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-oci-secrets
+                  key: region
 
 ---
 apiVersion: v1
@@ -40,11 +56,11 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-frontend-svc
   annotations:
-    # 3. Настройки для Oracle Load Balancer
+    # Настройки Load Balancer
     oci.oraclecloud.com/load-balancer-type: "lb"
     service.beta.kubernetes.io/oci-load-balancer-subnet1: "ocid1.subnet.oc1.il-jerusalem-1.aaaaaaaau3nxpc7vkfnkowlrtjq7ankjlblm67gmfuf6gdvrraaqioxmav5q"
     
-    # 4. Приказываем Балансировщику проверять /login
+    # Health check
     service.beta.kubernetes.io/oci-load-balancer-health-check-path: "/login"
     service.beta.kubernetes.io/oci-load-balancer-health-check-return-code: "200"
 spec:
