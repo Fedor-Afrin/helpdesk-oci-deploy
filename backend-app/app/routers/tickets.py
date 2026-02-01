@@ -35,9 +35,7 @@ def read_tickets(
     is_staff: bool = False,
     db: Session = Depends(get_db)
 ):
-    if is_admin or is_staff:
-        return crud.get_all_tickets(db)
-    return crud.get_tickets(db, user_id=user_id, is_admin=False)
+    return crud.get_tickets(db, user_id=user_id, is_admin=is_admin, is_staff=is_staff)
 
 @router.get("/{ticket_id}", response_model=schemas.TicketResponse)
 def read_ticket(ticket_id: int, db: Session = Depends(get_db)):
