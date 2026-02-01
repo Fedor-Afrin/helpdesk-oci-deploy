@@ -172,13 +172,13 @@ def admin():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        role = request.form.get('role')
         
-        is_admin = (role == 'admin')
-        is_staff = (role == 'staff' or is_admin)
+        # ПРАВИЛЬНЫЙ СПОСОБ получения галочек из твоего HTML
+        # Если галочка стоит, придет 'on', если нет - None
+        is_admin = True if request.form.get('is_admin') == 'on' else False
+        is_staff = True if request.form.get('is_staff') == 'on' else False
 
         try:
-            # СТРОГО /auth/users — как подтвердил твой kubectl exec
             resp = requests.post(f"{BACKEND_URL}/auth/users", json={
                 "username": username,
                 "password": password,
@@ -187,7 +187,7 @@ def admin():
             }, timeout=5)
             
             if resp.status_code == 200:
-                flash('User created successfully', 'success')
+                flash(f'User {username} created successfully!', 'success')
             else:
                 flash(f'Error: {resp.text}', 'error')
         except Exception as e:
