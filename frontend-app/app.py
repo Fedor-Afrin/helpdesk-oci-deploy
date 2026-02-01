@@ -180,7 +180,7 @@ def admin():
 
         try:
             # ВАЖНО: меняем /auth/register на /auth/users
-            resp = requests.post(f"{BACKEND_URL}/auth/users", json={
+            resp = requests.post(f"{BACKEND_URL}/register", json={
                 "username": username,
                 "password": password,
                 "is_admin": is_admin,
