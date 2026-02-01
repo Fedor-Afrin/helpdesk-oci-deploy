@@ -100,6 +100,18 @@ def add_report(
     crud.create_report(db, ticket_id, comment, file_path)
     return {"status": "ok"}
 
-@router.get("/{ticket_id}/reports", response_model=List[schemas.ReportResponse])
-def get_reports(ticket_id: int, db: Session = Depends(get_db)):
-    return crud.get_reports(db, ticket_id)
+@router.get("/", response_model=List[schemas.TicketResponse])
+def read_tickets(
+    user_id: int, 
+    is_admin: bool = False, 
+    is_staff: bool = False,
+    db: Session = Depends(get_db)
+):
+    # Просто передаем всё в crud.get_tickets. 
+    # Твой crud.py сам решит: если admin/staff — даст всё, если нет — отфильтрует по user_id.
+    return crud.get_tickets(
+        db, 
+        user_id=user_id, 
+        is_admin=is_admin, 
+        is_staff=is_staff
+    )
