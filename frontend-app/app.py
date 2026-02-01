@@ -164,6 +164,7 @@ def admin():
     if 'user_id' not in session or not session.get('is_admin'):
         return redirect(url_for('dashboard'))
     
+# Исправленный блок функции admin в frontend-app/app.py
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if 'user_id' not in session or not session.get('is_admin'):
@@ -174,12 +175,11 @@ def admin():
         password = request.form.get('password')
         role = request.form.get('role')
         
-        # Исправляем логику ролей: админ тоже является сотрудником (staff)
         is_admin = (role == 'admin')
         is_staff = (role == 'staff' or is_admin)
 
         try:
-            # ВАЖНО: меняем /auth/register на /auth/users
+            # СТРОГО /auth/users - как показал kubectl exec
             resp = requests.post(f"{BACKEND_URL}/auth/users", json={
                 "username": username,
                 "password": password,
@@ -189,10 +189,9 @@ def admin():
             if resp.status_code == 200:
                 flash('User created successfully', 'success')
             else:
-                # Если будет ошибка 422, мы увидим почему
-                flash(f'Error creating user: {resp.text}', 'error')
+                flash(f'Error: {resp.text}', 'error')
         except Exception as e:
-            flash(f'Backend connection failed: {str(e)}', 'error')
+            flash(f'Connection error: {str(e)}', 'error')
 
     return render_template('admin.html')
 
