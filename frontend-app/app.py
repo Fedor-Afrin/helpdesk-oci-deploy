@@ -179,7 +179,7 @@ def admin():
         is_staff = (role == 'staff' or is_admin)
 
         try:
-            # СТРОГО /auth/users
+            # СТРОГО /auth/users — как подтвердил твой kubectl exec
             resp = requests.post(f"{BACKEND_URL}/auth/users", json={
                 "username": username,
                 "password": password,
