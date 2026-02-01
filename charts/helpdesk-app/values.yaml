@@ -14,7 +14,7 @@ backend:
 # Настройки Фронтенда (Flask)
 frontend:
   repository: fedorafrin85/helpdesk-frontend
-  tag: "v2.6"
+  tag: "v2.7"
   replicaCount: 1
   containerPort: 5000
   serviceType: LoadBalancer
