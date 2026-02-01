@@ -1,13 +1,109 @@
-body { font-family: sans-serif; background: #f4f4f4; margin: 0; }
-.navbar { background: #333; color: #fff; padding: 15px; display: flex; justify-content: space-between; }
-.navbar a { color: #fff; text-decoration: none; margin-left: 15px; }
-.container { max-width: 900px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; }
-.alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; }
-.alert.error { background: #ffdddd; color: #a00; }
-.alert.success { background: #ddffdd; color: #0a0; }
-input, textarea { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
-button { padding: 10px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
-.btn-danger { background: #dc3545; }
-.tickets-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-.tickets-table th, .tickets-table td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-.report-card { background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-left: 4px solid #007bff; }
+/* --- Стили для бейджиков статуса --- */
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge.new {
+    background: #17a2b8;
+    color: white;
+}
+
+.badge.in_progress {
+    background: #ffc107;
+    color: #333;
+}
+
+.badge.closed {
+    background: #6c757d;
+    color: white;
+}
+
+/* --- Оформление секции отчетов --- */
+.reports-section {
+    margin-top: 30px;
+}
+
+.report-card {
+    background: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #007bff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.text-muted {
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+/* --- Кастомная кнопка-скрепка (File Upload) --- */
+.file-upload-wrapper {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.custom-file-upload:hover {
+    background: #dee2e6;
+}
+
+.custom-file-upload i {
+    margin-right: 5px;
+}
+
+#file-upload {
+    display: none;
+}
+
+/* Прячем стандартный инпут */
+#file-name {
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+}
+
+/* --- Форма обновления статуса --- */
+.status-update-box {
+    background: #fdfdfe;
+    padding: 15px;
+    border: 1px solid #eef;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+
+.inline-form {
+    display: flex;
+    gap: 10px;
+}
+
+.inline-form select {
+    width: auto;
+    flex-grow: 1;
+}
+
+/* --- Кнопка создания (универсальная) --- */
+.btn-primary {
+    background: #007bff;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}

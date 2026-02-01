@@ -1,49 +1,218 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="ticket-header">
-    <a href="{{ url_for('dashboard') }}">← Back</a>
+    <a href="{{ url_for('dashboard') }}" class="back-link">← Назад к списку</a>
     <h2>#{{ ticket.id }} {{ ticket.title }}</h2>
-    <p><strong>Created at:</strong> {{ ticket.created_at[:16]|replace('T', ' ') if ticket.created_at else '-' }}</p>
-    <p>{{ ticket.description }}</p>
-    <p>Current Status: <span class="badge {{ ticket.status }}">{{ ticket.status }}</span></p>
+    <div class="ticket-meta">
+        <p><strong>Создано:</strong> {{ ticket.created_at[:16]|replace('T', ' ') if ticket.created_at else '-' }}</p>
+        <p><strong>Описание:</strong> {{ ticket.description }}</p>
+        <p><strong>Статус:</strong> <span class="badge {{ ticket.status }}">{{ ticket.status }}</span></p>
+    </div>
 </div>
 
+<hr>
+
+{# Блок обновления статуса только для сотрудников и админов #}
 {% if session.is_staff or session.is_admin %}
 <div class="status-update-box">
-    <h4>Update Status</h4>
-    <form action="{{ url_for('update_ticket', ticket_id=ticket.id) }}" method="post">
+    <h4>Обновить статус заявки</h4>
+    <form action="{{ url_for('update_ticket', ticket_id=ticket.id) }}" method="post" class="inline-form">
         <select name="status">
-            <option value="new" {% if ticket.status == 'new' %}selected{% endif %}>New</option>
-            <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-            <option value="closed" {% if ticket.status == 'closed' %}selected{% endif %}>Closed</option>
+            <option value="new" {% if ticket.status=='new' %}selected{% endif %}>Новая</option>
+            <option value="in_progress" {% if ticket.status=='in_progress' %}selected{% endif %}>В работе</option>
+            <option value="closed" {% if ticket.status=='closed' %}selected{% endif %}>Закрыта</option>
         </select>
-        <button type="submit" class="btn-primary">Update Status</button>
+        <button type="submit" class="btn-primary">Применить</button>
     </form>
 </div>
 {% endif %}
 
 <div class="reports-section">
-    <h3>Work Reports & Files</h3>
-    
-    {% for report in reports %}
-    <div class="report-card">
-        <p>{{ report.comment }}</p>
-        {% if report.file_path %}
-            <a href="{{ url_for('serve_media', filename=report.file_path) }}" target="_blank">📎 Download File</a>
-        {% endif %}
-        <small>{{ report.created_at[:16]|replace('T', ' ') if report.created_at else '' }}</small>
-    </div>
-    {% else %}
-        <p>No reports yet.</p>
-    {% endfor %}
+    <h3>Отчеты о работе и файлы</h3>
 
+    <div class="reports-list">
+        {% for report in reports %}
+        <div class="report-card">
+            <p>{{ report.comment }}</p>
+            {% if report.file_path %}
+            <div class="file-link">
+                <a href="{{ url_for('serve_media', filename=report.file_path) }}" target="_blank">
+                    <i class="fas fa-paperclip"></i> Скачать файл
+                </a>
+            </div>
+            {% endif %}
+            <small class="text-muted">{{ report.created_at[:16]|replace('T', ' ') if report.created_at else ''
+                }}</small>
+        </div>
+        {% else %}
+        <p>Отчетов пока нет.</p>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    {# Форма добавления отчета со скрепкой #}
     <div class="add-report">
-        <h4>Add Report</h4>
+        <h4>Добавить отчет о проделанной работе</h4>
         <form action="{{ url_for('add_report', ticket_id=ticket.id) }}" method="post" enctype="multipart/form-data">
-            <textarea name="comment" placeholder="Work done..." required></textarea>
-            <input type="file" name="file">
-            <button type="submit">Add Report</button>
+            <textarea name="comment" placeholder="Опишите, что было сделано..." required></textarea>
+
+            <div class="file-upload-wrapper">
+                <label for="file-upload" class="custom-file-upload">
+                    <i class="fas fa-paperclip"></i> Прикрепить файл
+                </label>
+                <input id="file-upload" type="file" name="file" onchange="updateFileName(this)">
+                <span id="file-name">Файл не выбран</span>
+            </div>
+
+            <button type="submit" class="btn-submit">Отправить отчет</button>
         </form>
     </div>
 </div>
+
+<script>
+    // Скрипт для отображения имени выбранного файла
+    function updateFileName(input) {
+        if (input.files && input.files.length > 0) {
+            var fileName = input.files[0].name;
+            document.getElementById('file-name').textContent = fileName;
+        } else {
+            document.getElementById('file-name').textContent = "Файл не выбран";
+        }
+    }
+</script>
+
+<style>
+    .ticket-header {
+        margin-bottom: 20px;
+    }
+
+    .back-link {
+        text-decoration: none;
+        color: #007bff;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+
+    .ticket-meta p {
+        margin: 5px 0;
+    }
+
+    .status-update-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 30px;
+        border: 1px solid #dee2e6;
+    }
+
+    .inline-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .report-card {
+        background: #fff;
+        border-left: 4px solid #007bff;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-link {
+        margin: 10px 0;
+        font-weight: bold;
+    }
+
+    .file-link a {
+        color: #28a745;
+        text-decoration: none;
+    }
+
+    .add-report {
+        background: #fff;
+        padding: 20px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+    }
+
+    .add-report textarea {
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        font-family: inherit;
+    }
+
+    /* Стили для кастомной кнопки-скрепки */
+    .file-upload-wrapper {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .custom-file-upload {
+        display: inline-block;
+        padding: 8px 16px;
+        cursor: pointer;
+        background: #e9ecef;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: 0.2s;
+    }
+
+    .custom-file-upload:hover {
+        background: #dee2e6;
+    }
+
+    #file-upload {
+        display: none;
+    }
+
+    #file-name {
+        font-size: 0.9em;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .btn-submit {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .btn-submit:hover {
+        background: #0056b3;
+    }
+
+    .badge.new {
+        background: #17a2b8;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+    }
+
+    .badge.in_progress {
+        background: #ffc107;
+        color: black;
+        padding: 3px 8px;
+        border-radius: 12px;
+    }
+
+    .badge.closed {
+        background: #6c757d;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+    }
+</style>
 {% endblock %}
