@@ -159,10 +159,7 @@ def add_report(ticket_id):
         
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    if 'user_id' not in session or not session.get('is_admin'):
-        return redirect(url_for('dashboard'))
+
     
 # Исправленный блок функции admin в frontend-app/app.py
 @app.route('/admin', methods=['GET', 'POST'])
