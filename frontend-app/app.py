@@ -39,15 +39,27 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-@router.get("/", response_model=List[schemas.TicketResponse])
-def read_tickets(
-    user_id: int, 
-    is_admin: bool = False, 
-    is_staff: bool = False,
-    db: Session = Depends(get_db)
-):
-    return crud.get_tickets(db, user_id=user_id, is_admin=is_admin, is_staff=is_staff)
+@app.route('/dashboard') # В Flask используется @app.route, а не @router.get
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     
+    # Подготавливаем параметры для бэкенда
+    params = {
+        'user_id': session['user_id'],
+        'is_admin': str(session.get('is_admin', False)).lower(),
+        'is_staff': str(session.get('is_staff', False)).lower()
+    }
+    
+    try:
+        # Вызываем бэкенд
+        resp = requests.get(f"{BACKEND_URL}/tickets/", params=params, timeout=5)
+        tickets = resp.json() if resp.status_code == 200 else []
+    except Exception as e:
+        print(f"Error: {e}")
+        tickets = []
+        
+    return render_template('dashboard.html', tickets=tickets, user=session)
 # --- Создание тикета ---
 @app.route('/create_ticket', methods=['POST'])
 def create_ticket():
