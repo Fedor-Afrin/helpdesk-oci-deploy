@@ -164,16 +164,23 @@ def admin():
     if 'user_id' not in session or not session.get('is_admin'):
         return redirect(url_for('dashboard'))
     
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role')
         
+        # Исправляем логику ролей: админ тоже является сотрудником (staff)
         is_admin = (role == 'admin')
-        is_staff = (role == 'staff')
+        is_staff = (role == 'staff' or is_admin)
 
         try:
-            resp = requests.post(f"{BACKEND_URL}/auth/register", json={
+            # ВАЖНО: меняем /auth/register на /auth/users
+            resp = requests.post(f"{BACKEND_URL}/auth/users", json={
                 "username": username,
                 "password": password,
                 "is_admin": is_admin,
@@ -182,9 +189,10 @@ def admin():
             if resp.status_code == 200:
                 flash('User created successfully', 'success')
             else:
+                # Если будет ошибка 422, мы увидим почему
                 flash(f'Error creating user: {resp.text}', 'error')
-        except:
-            flash('Backend connection failed', 'error')
+        except Exception as e:
+            flash(f'Backend connection failed: {str(e)}', 'error')
 
     return render_template('admin.html')
 
