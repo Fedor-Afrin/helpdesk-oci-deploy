@@ -43,15 +43,21 @@ def logout():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
+    # Явно приводим True/False к строке 'true'/'false' для FastAPI
     params = {
         'user_id': session['user_id'],
-        'is_admin': session['is_admin'],
-        'is_staff': session.get('is_staff', False)
+        'is_admin': str(session['is_admin']).lower(),
+        'is_staff': str(session.get('is_staff', False)).lower()
     }
-    resp = requests.get(f"{BACKEND_URL}/tickets/", params=params)
-    tickets = resp.json() if resp.status_code == 200 else []
+    
+    try:
+        resp = requests.get(f"{BACKEND_URL}/tickets/", params=params, timeout=5)
+        tickets = resp.json() if resp.status_code == 200 else []
+    except:
+        tickets = []
+        
     return render_template('dashboard.html', tickets=tickets, user=session)
-
 # --- Создание тикета ---
 @app.route('/create_ticket', methods=['POST'])
 def create_ticket():
