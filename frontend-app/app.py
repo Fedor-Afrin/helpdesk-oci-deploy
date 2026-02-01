@@ -179,13 +179,14 @@ def admin():
         is_staff = (role == 'staff' or is_admin)
 
         try:
-            # СТРОГО /auth/users - как показал kubectl exec
+            # СТРОГО /auth/users
             resp = requests.post(f"{BACKEND_URL}/auth/users", json={
                 "username": username,
                 "password": password,
                 "is_admin": is_admin,
                 "is_staff": is_staff
-            })
+            }, timeout=5)
+            
             if resp.status_code == 200:
                 flash('User created successfully', 'success')
             else:
