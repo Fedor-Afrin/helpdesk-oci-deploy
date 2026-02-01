@@ -52,7 +52,7 @@ def dashboard():
     try:
         # ПЕРЕДАЕМ ПАРАМЕТРЫ: теперь бэкенд поймет, что ты админ или работник
         params = {
-            "user_id": user_id,
+            "user_id": (user_id),
             "is_admin": str(is_admin).lower(),
             "is_staff": str(is_staff).lower()
         }
