@@ -44,19 +44,30 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    params = {
-        'user_id': session['user_id'],
-        'is_admin': session['is_admin'],
-        'is_staff': session.get('is_staff', False)
-    }
+    user_id = session.get('user_id')
+    # Достаем флаги из сессии (убедись, что они сохраняются при логине)
+    is_admin = session.get('is_admin', False)
+    is_staff = session.get('is_staff', False)
+
     try:
+        # ПЕРЕДАЕМ ПАРАМЕТРЫ: теперь бэкенд поймет, что ты админ или работник
+        params = {
+            "user_id": user_id,
+            "is_admin": str(is_admin).lower(),
+            "is_staff": str(is_staff).lower()
+        }
         resp = requests.get(f"{BACKEND_URL}/tickets/", params=params)
-        tickets = resp.json() if resp.status_code == 200 else []
-    except:
-        tickets = []
-        flash('Error connecting to backend', 'error')
         
-    return render_template('dashboard.html', tickets=tickets, user=session)
+        if resp.status_code == 200:
+            tickets = resp.json()
+        else:
+            tickets = []
+            flash(f"Error fetching tickets: {resp.text}")
+    except Exception as e:
+        tickets = []
+        flash(f"Connection error: {str(e)}")
+        
+    return render_template('dashboard.html', tickets=tickets)
 
 # --- Создание тикета ---
 @app.route('/create_ticket', methods=['POST'])
