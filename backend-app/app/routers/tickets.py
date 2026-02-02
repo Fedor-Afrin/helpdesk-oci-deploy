@@ -8,14 +8,14 @@ from app import crud, schemas
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
-# Конфигурация OCI Object Storage (Берем из переменных окружения)
+# Конфигурация OCI Object Storage
 OCI_ACCESS_KEY = os.getenv('OCI_ACCESS_KEY')
 OCI_SECRET_KEY = os.getenv('OCI_SECRET_KEY')
 OCI_REGION = os.getenv('OCI_REGION', 'il-jerusalem-1')
 OCI_NAMESPACE = os.getenv('OCI_NAMESPACE')
 OCI_BUCKET_NAME = os.getenv('OCI_BUCKET_NAME')
 
-# Инициализация клиента S3 для Oracle Cloud
+# Инициализация клиента S3 для Oracle
 s3_client = boto3.client(
     's3',
     aws_access_key_id=OCI_ACCESS_KEY,
@@ -74,23 +74,21 @@ def delete_ticket(ticket_id: int, is_admin: bool = False, db: Session = Depends(
         raise HTTPException(status_code=404, detail="Ticket not found")
     return {"status": "deleted"}
 
+# --- ВОТ ЭТОТ БЛОК МЫ ИСПРАВИЛИ И ДОБАВИЛИ ---
+
 @router.post("/{ticket_id}/reports")
 def add_report(
     ticket_id: int,
-    comment: str = Form(...),
-    file: Optional[UploadFile] = File(None),
+    comment: str = Form(...), # Получаем текст из формы
+    file: Optional[UploadFile] = File(None), # Получаем файл из формы (если есть)
     db: Session = Depends(get_db)
 ):
+    """Эндпоинт для ЗАГРУЗКИ отчета и файла (POST)"""
     file_path = None
     if file:
         file_path = f"tickets/{ticket_id}/{file.filename}"
         try:
-            # Загружаем файл напрямую в бакет Oracle Object Storage
-            s3_client.upload_fileobj(
-                file.file,
-                OCI_BUCKET_NAME,
-                file_path
-            )
+            s3_client.upload_fileobj(file.file, OCI_BUCKET_NAME, file_path)
         except Exception as e:
             print(f"Error uploading to OCI: {e}")
             raise HTTPException(status_code=500, detail="Could not upload file to cloud storage")
@@ -98,18 +96,10 @@ def add_report(
     crud.create_report(db, ticket_id, comment, file_path)
     return {"status": "ok"}
 
-@router.get("/", response_model=List[schemas.TicketResponse])
-def read_tickets(
-    user_id: int, 
-    is_admin: bool = False, 
-    is_staff: bool = False,
-    db: Session = Depends(get_db)
-):
-    # Просто передаем всё в crud.get_tickets. 
-    # Твой crud.py сам решит: если admin/staff — даст всё, если нет — отфильтрует по user_id.
-    return crud.get_tickets(
-        db, 
-        user_id=user_id, 
-        is_admin=is_admin, 
-        is_staff=is_staff
-    )
+@router.get("/{ticket_id}/reports", response_model=List[schemas.ReportResponse])
+def get_reports(ticket_id: int, db: Session = Depends(get_db)):
+    """
+    ЭТОГО НЕ БЫЛО! Эндпоинт для ПОЛУЧЕНИЯ списка отчетов (GET).
+    Именно из-за отсутствия этой функции ты получал ошибку 405 и пустой список.
+    """
+    return crud.get_reports_by_ticket(db, ticket_id=ticket_id)

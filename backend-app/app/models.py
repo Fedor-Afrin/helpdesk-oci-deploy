@@ -11,7 +11,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     is_staff = Column(Boolean, default=False)
 
-    # Связи: чтобы знать, какие тикеты связаны с этим пользователем
+    # Связи: какие тикеты связаны с пользователем
     created_tickets = relationship("Ticket", back_populates="creator", foreign_keys="[Ticket.creator_id]")
     assigned_tickets = relationship("Ticket", back_populates="assignee", foreign_keys="[Ticket.assignee_id]")
 
@@ -20,21 +20,22 @@ class Ticket(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(Text)
-    status = Column(String, default="new") # Доступные статусы: new, in_progress, resolved, closed
+    status = Column(String, default="new")
     
-    # Внешние ключи (ID пользователей)
     creator_id = Column(Integer, ForeignKey("users.id"))
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     last_editor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    # Даты (создание и автоматическое обновление при правке)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now()) 
 
-    # Объекты связей (для обращения через .creator, .assignee и т.д.)
     creator = relationship("User", foreign_keys=[creator_id], back_populates="created_tickets")
     assignee = relationship("User", foreign_keys=[assignee_id], back_populates="assigned_tickets")
     last_editor = relationship("User", foreign_keys=[last_editor_id])
+
+    # ДОБАВЛЕНО: Связь с отчетами
+    # cascade="all, delete-orphan" означает: если удалишь тикет, удалятся и все его отчеты
+    reports = relationship("Report", back_populates="ticket", cascade="all, delete-orphan")
 
 class Report(Base):
     __tablename__ = "reports"
@@ -43,3 +44,6 @@ class Report(Base):
     comment = Column(Text)
     file_path = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # ДОБАВЛЕНО: Обратная связь для отчета
+    ticket = relationship("Ticket", back_populates="reports")
