@@ -93,3 +93,8 @@ def create_report(db: Session, ticket_id: int, comment: str, file_path: str = No
 
 def get_reports(db: Session, ticket_id: int):
     return db.query(models.Report).filter(models.Report.ticket_id == ticket_id).all()
+
+
+def get_reports_by_ticket(db: Session, ticket_id: int):
+    """Получает все отчеты и файлы, привязанные к конкретному тикету"""
+    return db.query(models.Report).filter(models.Report.ticket_id == ticket_id).all()
