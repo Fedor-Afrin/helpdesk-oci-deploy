@@ -5,7 +5,7 @@ global:
 # Настройки Бэкенда (FastAPI)
 backend:
   repository: fedorafrin85/helpdesk-backend
-  tag: "v3.2"
+  tag: "v3.3"
   replicaCount: 1
   containerPort: 8000
 
@@ -14,7 +14,7 @@ backend:
 # Настройки Фронтенда (Flask)
 frontend:
   repository: fedorafrin85/helpdesk-frontend
-  tag: "v3.2"
+  tag: "v3.3"
   replicaCount: 1
   containerPort: 5000
   serviceType: LoadBalancer
