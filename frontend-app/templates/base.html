@@ -5,6 +5,37 @@
     <title>Service Desk</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Добавляем стили для разнесения элементов навигации */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            /* Отступы по бокам */
+            background-color: #333;
+            /* Тёмный фон как у тебя был */
+            color: white;
+        }
+
+        .navbar .links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            /* Расстояние между "Привет", "Админка" и "Выход" */
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .admin-link {
+            background: #555;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 
 <body>
@@ -16,7 +47,7 @@
             {% if session.is_admin %}
             <a href="{{ url_for('admin') }}" class="admin-link">Панель управления</a>
             {% endif %}
-            <a href="{{ url_for('logout') }}">Выйти</a>
+            <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Выйти</a>
         </div>
         {% endif %}
     </nav>
