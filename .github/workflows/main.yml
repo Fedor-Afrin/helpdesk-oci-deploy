@@ -8,10 +8,15 @@ on:
       - "frontend-app/**"
       - "backend-app/**"
       - ".github/workflows/**"
+      - "charts/**"
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Даем права на запись обратно в репозиторий
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -22,7 +27,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Сборка Backend (FastAPI)
       - name: Build and push Backend
         uses: docker/build-push-action@v4
         with:
@@ -32,7 +36,6 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-backend:${{ github.sha }}
 
-      # Сборка Frontend (Flask)
       - name: Build and push Frontend
         uses: docker/build-push-action@v4
         with:
@@ -41,3 +44,22 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-frontend:${{ github.sha }}
+
+      # ШАГ АВТОМАТИЗАЦИИ GITOPS
+      - name: Update Helm Chart Values
+        run: |
+          # Переходим к файлу values.yaml по твоему дереву
+          VALUES_PATH="charts/helpdesk-app/values.yaml"
+
+          # Обновляем теги через yq
+          yq -i ".backend.tag = \"${{ github.sha }}\"" $VALUES_PATH
+          yq -i ".frontend.tag = \"${{ github.sha }}\"" $VALUES_PATH
+
+          # Настраиваем Git
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # Коммитим и пушим изменения обратно
+          git add $VALUES_PATH
+          git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
+          git push
