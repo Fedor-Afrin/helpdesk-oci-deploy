@@ -1,22 +1,19 @@
 # Общие настройки для Oracle Cloud
 global:
   storageClass: oci-bv
-
 # Настройки Бэкенда (FastAPI)
 backend:
   repository: fedorafrin85/helpdesk-backend
-  tag: "latest" # Сюда пайплайн запишет SHA
+  tag: "28c900e28d80cf0f08598e46e150572d9a487647" # Сюда пайплайн запишет SHA
   replicaCount: 1
   containerPort: 8000
-
 # Настройки Фронтенда (Flask)
 frontend:
   repository: fedorafrin85/helpdesk-frontend
-  tag: "latest" # И сюда тоже
+  tag: "28c900e28d80cf0f08598e46e150572d9a487647" # И сюда тоже
   replicaCount: 1
   containerPort: 5000
   serviceType: LoadBalancer
-
 # Database для PostgreSQL
 database:
   image: postgres:15-alpine
