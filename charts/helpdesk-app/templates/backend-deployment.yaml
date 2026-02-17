@@ -18,9 +18,15 @@ spec:
           image: "{{ .Values.backend.repository }}:{{ .Values.backend.tag }}"
           ports:
             - containerPort: {{ .Values.backend.containerPort }}
+          resources: 
+            requests: 
+              memory: {{.Values.backend.request_memory}}
+            limits:
+              memory: {{.Values.backend.limits_memory}}  
           env:
             - name: DATABASE_URL
               value: "postgresql://postgres:mypassword@{{ .Release.Name }}-db-svc:5432/helpdesk"
+
             
             # Берем данные из твоего секрета helpdesk-oci-secrets
             - name: OCI_ACCESS_KEY

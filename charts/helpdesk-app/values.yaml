@@ -7,6 +7,9 @@ backend:
   tag: "28c900e28d80cf0f08598e46e150572d9a487647" # Сюда пайплайн запишет SHA
   replicaCount: 1
   containerPort: 8000
+  limits_memory: 150Mi
+  request_memory: 50Mi
+
 # Настройки Фронтенда (Flask)
 frontend:
   repository: fedorafrin85/helpdesk-frontend
