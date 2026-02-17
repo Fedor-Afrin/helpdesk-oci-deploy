@@ -16,9 +16,13 @@ frontend:
   replicaCount: 1
   containerPort: 5000
   serviceType: LoadBalancer
+  limits_memory: 150Mi
+  request_memory: 50Mi
 # Database для PostgreSQL
 database:
   image: postgres:15-alpine
   storageSize: 10Gi
   storageClass: oci-bv
   port: 5432
+  limits_memory: 150Mi
+  request_memory: 100Mi
