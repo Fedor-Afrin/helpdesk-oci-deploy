@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-frontend
+  name: "{{ .Release.Name }}-frontend"
 spec:
-  replicas: {{ .Values.frontend.replicaCount }}
+  replicas: { { .Values.frontend.replicaCount } }
   selector:
     matchLabels:
       app: helpdesk-frontend
@@ -16,13 +16,13 @@ spec:
         - name: frontend
           image: "{{ .Values.frontend.repository }}:{{ .Values.frontend.tag }}"
           ports:
-            - containerPort: {{ .Values.frontend.containerPort }}
-          
+            - containerPort: { { .Values.frontend.containerPort } }
+
           # Проверка здоровья
           readinessProbe:
             httpGet:
               path: /login
-              port: {{ .Values.frontend.containerPort }}
+              port: { { .Values.frontend.containerPort } }
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
@@ -32,7 +32,7 @@ spec:
           env:
             - name: BACKEND_URL
               value: "http://{{ .Release.Name }}-backend-svc:8000"
-            
+
             # --- НОВЫЙ БЛОК: Данные для редиректа в облако ---
             - name: OCI_NAMESPACE
               valueFrom:
@@ -54,12 +54,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-frontend-svc
+  name: "{{ .Release.Name }}-frontend-svc"
   annotations:
     # Настройки Load Balancer
     oci.oraclecloud.com/load-balancer-type: "lb"
     service.beta.kubernetes.io/oci-load-balancer-subnet1: "ocid1.subnet.oc1.il-jerusalem-1.aaaaaaaau3nxpc7vkfnkowlrtjq7ankjlblm67gmfuf6gdvrraaqioxmav5q"
-    
+
     # Health check
     service.beta.kubernetes.io/oci-load-balancer-health-check-path: "/login"
     service.beta.kubernetes.io/oci-load-balancer-health-check-return-code: "200"
@@ -67,6 +67,6 @@ spec:
   type: LoadBalancer
   ports:
     - port: 80
-      targetPort: {{ .Values.frontend.containerPort }}
+      targetPort: { { .Values.frontend.containerPort } }
   selector:
     app: helpdesk-frontend

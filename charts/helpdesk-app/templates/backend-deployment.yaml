@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-backend
+  name: "{{ .Release.Name }}-backend"
 spec:
-  replicas: {{ .Values.backend.replicaCount }}
+  replicas: { { .Values.backend.replicaCount } }
   selector:
     matchLabels:
       app: helpdesk-backend
@@ -16,20 +16,20 @@ spec:
         - name: backend
           image: "{{ .Values.backend.repository }}:{{ .Values.backend.tag }}"
           ports:
-            - containerPort: {{ .Values.backend.containerPort }}
-          
+            - containerPort: { { .Values.backend.containerPort } }
+
           # --- ДОБАВЛЕННЫЙ БЛОК ЛИМИТОВ ПАМЯТИ ---
           resources:
             requests:
-              memory: {{ .Values.backend.request_memory | default "128Mi" }}
+              memory: { { .Values.backend.request_memory | default "128Mi" } }
             limits:
-              memory: {{ .Values.backend.limits_memory | default "256Mi" }}
+              memory: { { .Values.backend.limits_memory | default "256Mi" } }
           # ----------------------------------------
 
           env:
             - name: DATABASE_URL
               value: "postgresql://postgres:mypassword@{{ .Release.Name }}-db-svc:5432/helpdesk"
-            
+
             # Берем данные из твоего секрета helpdesk-oci-secrets
             - name: OCI_ACCESS_KEY
               valueFrom:

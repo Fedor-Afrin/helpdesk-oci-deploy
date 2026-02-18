@@ -28,22 +28,21 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # --- ЛОГИКА ТЕГОВ ---
+      # --- ЛОГИКА ТЕГОВ ---
+      # --- ЛОГИКА ТЕГОВ (ИСПРАВЛЕННАЯ ПОД ЛИНТЕР) ---
       - name: Generate Docker Tags
-        id: meta
+        id: meta # Мы дали шагу ID, чтобы ссылаться на него
         run: |
-          # Сохраняем имя пользователя для краткости
           USER="${{ secrets.DOCKERHUB_USERNAME }}"
           SHA="${{ github.sha }}"
 
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # ЕСЛИ MAIN: Делаем два тега (latest и SHA)
-            echo "BACKEND_TAGS=$USER/helpdesk-backend:latest,$USER/helpdesk-backend:$SHA" >> $GITHUB_ENV
-            echo "FRONTEND_TAGS=$USER/helpdesk-frontend:latest,$USER/helpdesk-frontend:$SHA" >> $GITHUB_ENV
+            # Пишем в $GITHUB_OUTPUT вместо $GITHUB_ENV
+            echo "backend_tags=$USER/helpdesk-backend:latest,$USER/helpdesk-backend:$SHA" >> $GITHUB_OUTPUT
+            echo "frontend_tags=$USER/helpdesk-frontend:latest,$USER/helpdesk-frontend:$SHA" >> $GITHUB_OUTPUT
           else
-            # ЕСЛИ TEST: Делаем ТОЛЬКО ОДИН тег (test-latest)
-            # SHA-тег сюда не попадет
-            echo "BACKEND_TAGS=$USER/helpdesk-backend:test-latest" >> $GITHUB_ENV
-            echo "FRONTEND_TAGS=$USER/helpdesk-frontend:test-latest" >> $GITHUB_ENV
+            echo "backend_tags=$USER/helpdesk-backend:test-latest" >> $GITHUB_OUTPUT
+            echo "frontend_tags=$USER/helpdesk-frontend:test-latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Backend
@@ -51,16 +50,16 @@ jobs:
         with:
           context: ./backend-app
           push: true
-          # Используем сформированную выше переменную
-          tags: ${{ env.BACKEND_TAGS }}
+          # Теперь линтер видит четкую ссылку: шаг meta -> выходы -> backend_tags
+          tags: ${{ steps.meta.outputs.backend_tags }}
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v4
         with:
           context: ./frontend-app
           push: true
-          # Используем сформированную выше переменную
-          tags: ${{ env.FRONTEND_TAGS }}
+          # И здесь тоже всё чисто
+          tags: ${{ steps.meta.outputs.frontend_tags }}
 
       # --- ОБНОВЛЕНИЕ HELM (ТОЛЬКО ДЛЯ MAIN) ---
       - name: Update Helm Chart Values
