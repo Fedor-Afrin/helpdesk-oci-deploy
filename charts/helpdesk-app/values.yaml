@@ -25,4 +25,4 @@ database:
   storageClass: oci-bv
   port: 5432
   limits_memory: 150Mi
-  request_memory: 100Mi
+  request_memory: 512Mi
