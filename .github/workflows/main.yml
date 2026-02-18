@@ -4,17 +4,16 @@ on:
   push:
     branches:
       - main
+      - test
     paths-ignore:
-      # --- ВАЖНЫЕ ИЗМЕНЕНИЯ ЗДЕСЬ ---
-      - "charts/**" # Игнорируем любые изменения в папке charts (чтобы не было вечного цикла)
-      - ".github/workflows/**" # Игнорируем изменения в самом пайплайне
-      - "README.md" # Игнорируем документацию
+      - "charts/**"
+      - ".github/workflows/**"
+      - "README.md"
       - ".gitignore"
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # Даем права на запись обратно в репозиторий
     permissions:
       contents: write
 
@@ -28,40 +27,53 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # --- ЛОГИКА ТЕГОВ ---
+      - name: Generate Docker Tags
+        id: meta
+        run: |
+          # Сохраняем имя пользователя для краткости
+          USER="${{ secrets.DOCKERHUB_USERNAME }}"
+          SHA="${{ github.sha }}"
+
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # ЕСЛИ MAIN: Делаем два тега (latest и SHA)
+            echo "BACKEND_TAGS=$USER/helpdesk-backend:latest,$USER/helpdesk-backend:$SHA" >> $GITHUB_ENV
+            echo "FRONTEND_TAGS=$USER/helpdesk-frontend:latest,$USER/helpdesk-frontend:$SHA" >> $GITHUB_ENV
+          else
+            # ЕСЛИ TEST: Делаем ТОЛЬКО ОДИН тег (test-latest)
+            # SHA-тег сюда не попадет
+            echo "BACKEND_TAGS=$USER/helpdesk-backend:test-latest" >> $GITHUB_ENV
+            echo "FRONTEND_TAGS=$USER/helpdesk-frontend:test-latest" >> $GITHUB_ENV
+          fi
+
       - name: Build and push Backend
         uses: docker/build-push-action@v4
         with:
           context: ./backend-app
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-backend:${{ github.sha }}
+          # Используем сформированную выше переменную
+          tags: ${{ env.BACKEND_TAGS }}
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v4
         with:
           context: ./frontend-app
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/helpdesk-frontend:${{ github.sha }}
+          # Используем сформированную выше переменную
+          tags: ${{ env.FRONTEND_TAGS }}
 
-      # ШАГ АВТОМАТИЗАЦИИ GITOPS
+      # --- ОБНОВЛЕНИЕ HELM (ТОЛЬКО ДЛЯ MAIN) ---
       - name: Update Helm Chart Values
+        if: github.ref == 'refs/heads/main'
         run: |
-          # Переходим к файлу values.yaml по твоему дереву
           VALUES_PATH="charts/helpdesk-app/values.yaml"
 
-          # Обновляем теги через yq
-          # Флаг -i редактирует файл на месте
           yq -i ".backend.tag = \"${{ github.sha }}\"" $VALUES_PATH
           yq -i ".frontend.tag = \"${{ github.sha }}\"" $VALUES_PATH
 
-          # Настраиваем Git
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-          # Проверяем, есть ли изменения перед коммитом (чтобы не падал пустой коммит)
           if [[ -n $(git status -s $VALUES_PATH) ]]; then
             git add $VALUES_PATH
             git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
