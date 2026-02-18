@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "frontend-app/**"
-      - "backend-app/**"
-      - ".github/workflows/**"
-      - "charts/**"
+    paths-ignore:
+      # --- ВАЖНЫЕ ИЗМЕНЕНИЯ ЗДЕСЬ ---
+      - "charts/**" # Игнорируем любые изменения в папке charts (чтобы не было вечного цикла)
+      - ".github/workflows/**" # Игнорируем изменения в самом пайплайне
+      - "README.md" # Игнорируем документацию
+      - ".gitignore"
 
 jobs:
   build-and-push:
@@ -52,6 +53,7 @@ jobs:
           VALUES_PATH="charts/helpdesk-app/values.yaml"
 
           # Обновляем теги через yq
+          # Флаг -i редактирует файл на месте
           yq -i ".backend.tag = \"${{ github.sha }}\"" $VALUES_PATH
           yq -i ".frontend.tag = \"${{ github.sha }}\"" $VALUES_PATH
 
@@ -59,7 +61,11 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-          # Коммитим и пушим изменения обратно
-          git add $VALUES_PATH
-          git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
-          git push
+          # Проверяем, есть ли изменения перед коммитом (чтобы не падал пустой коммит)
+          if [[ -n $(git status -s $VALUES_PATH) ]]; then
+            git add $VALUES_PATH
+            git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
+            git push
+          else
+            echo "No changes in values.yaml"
+          fi
