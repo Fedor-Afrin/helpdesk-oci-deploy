@@ -29,11 +29,6 @@ spec:
             successThreshold: 1
             failureThreshold: 3
 
-          resources: 
-            requests: 
-              memory: {{.Values.frontend.request_memory}}
-            limits:
-              memory: {{.Values.frontend.limits_memory}}
           env:
             - name: BACKEND_URL
               value: "http://{{ .Release.Name }}-backend-svc:8000"

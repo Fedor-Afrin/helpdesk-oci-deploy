@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-db-cvc
+  name: {{ .Release.Name }}-db-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -30,12 +30,6 @@ spec:
           image: {{ .Values.database.image }}
           ports:
             - containerPort: {{ .Values.database.port }}
-          resources: 
-            requests: 
-              memory: {{.Values.database.request_memory}}
-            limits:
-              memory: {{.Values.database.limits_memory}}
-
           env:
             - name: POSTGRES_DB
               value: "helpdesk"
