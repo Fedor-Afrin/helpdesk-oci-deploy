@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: "{{ .Release.Name }}-frontend"
 spec:
-  replicas: { { .Values.frontend.replicaCount } }
+  replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
       app: helpdesk-frontend
@@ -16,13 +16,13 @@ spec:
         - name: frontend
           image: "{{ .Values.frontend.repository }}:{{ .Values.frontend.tag }}"
           ports:
-            - containerPort: { { .Values.frontend.containerPort } }
+            - containerPort: {{ .Values.frontend.containerPort }}
 
           # Проверка здоровья
           readinessProbe:
             httpGet:
               path: /login
-              port: { { .Values.frontend.containerPort } }
+              port: {{ .Values.frontend.containerPort }}
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
@@ -67,6 +67,6 @@ spec:
   type: LoadBalancer
   ports:
     - port: 80
-      targetPort: { { .Values.frontend.containerPort } }
+      targetPort: {{ .Values.frontend.containerPort }}
   selector:
     app: helpdesk-frontend
