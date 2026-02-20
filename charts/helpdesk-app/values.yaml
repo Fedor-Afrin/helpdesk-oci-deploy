@@ -4,7 +4,7 @@ global:
 # Настройки Бэкенда (FastAPI)
 backend:
   repository: fedorafrin85/helpdesk-backend
-  tag: "757fe7ac2e141089b83e9393afcbdc06eeb53efa" # Сюда пайплайн запишет SHA
+  tag: "e8b8da2bf1f898ce098b31bf5956c1903a476db7" # Сюда пайплайн запишет SHA
   replicaCount: 1
   request_memory: "128Mi"
   limits_memory: "256Mi"
@@ -12,7 +12,7 @@ backend:
 # Настройки Фронтенда (Flask)
 frontend:
   repository: fedorafrin85/helpdesk-frontend
-  tag: "757fe7ac2e141089b83e9393afcbdc06eeb53efa" # И сюда тоже
+  tag: "e8b8da2bf1f898ce098b31bf5956c1903a476db7" # И сюда тоже
   replicaCount: 1
   request_memory: "64Mi"
   limits_memory: "128Mi"
