@@ -8,8 +8,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: { { .Values.database.storageSize | default "10Gi" } }
-  storageClassName: { { .Values.database.storageClass } }
+      storage: {{ .Values.database.storageSize | default "10Gi" }}
+  storageClassName: {{ .Values.database.storageClass }}
 ---
 # 2. Сама база данных
 apiVersion: apps/v1
@@ -27,9 +27,9 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: { { .Values.database.image } }
+          image: {{ .Values.database.image }}
           ports:
-            - containerPort: { { .Values.database.port } }
+            - containerPort: {{ .Values.database.port }}
           env:
             - name: POSTGRES_DB
               value: "helpdesk"
