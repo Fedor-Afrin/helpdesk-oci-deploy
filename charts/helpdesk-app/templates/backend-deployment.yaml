@@ -18,19 +18,17 @@ spec:
           ports:
             - containerPort: { { .Values.backend.containerPort } }
 
-          # --- ДОБАВЛЕННЫЙ БЛОК ЛИМИТОВ ПАМЯТИ ---
           resources:
             requests:
               memory: { { .Values.backend.request_memory | default "128Mi" } }
             limits:
               memory: { { .Values.backend.limits_memory | default "256Mi" } }
-          # ----------------------------------------
 
           env:
             - name: DATABASE_URL
               value: "postgresql://postgres:mypassword@{{ .Release.Name }}-db-svc:5432/helpdesk"
 
-            # Берем данные из твоего секрета helpdesk-oci-secrets
+            # Секреты из helpdesk-oci-secrets
             - name: OCI_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
