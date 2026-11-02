@@ -1,0 +1,44 @@
+---
+# 1. Создаем Namespace
+- name: Create ArgoCD Namespace
+  kubernetes.core.k8s:
+    name: argocd
+    kind: Namespace
+    state: present
+
+# 2. Устанавливаем сам ArgoCD
+- name: Install ArgoCD Manifests
+  kubernetes.core.k8s:
+    state: present
+    src: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    namespace: argocd
+# # 3. Твоя задача
+# - name: Apply ArgoCD Ingress
+#   kubernetes.core.k8s:
+#     state: present
+#     definition:
+#       apiVersion: networking.k8s.io/v1
+#       kind: Ingress
+#       metadata:
+#         name: argo-ingress
+#         namespace: argocd
+#         annotations:
+#           cert-manager.io/cluster-issuer: "letsencrypt-prod"
+#           traefik.ingress.kubernetes.io/router.tls: "true"
+#           traefik.ingress.kubernetes.io/service.serversscheme: https
+#       spec:
+#         ingressClassName: traefik
+#         tls:
+#           - hosts: ["argocd.{{ domain_name }}"]
+#             secretName: argo-tls
+#         rules:
+#           - host: "argocd.{{ domain_name }}"
+#             http:
+#               paths:
+#                 - path: /
+#                   pathType: Prefix
+#                   backend:
+#                     service:
+#                       name: argocd-server
+#                       port:
+#                         number: 443

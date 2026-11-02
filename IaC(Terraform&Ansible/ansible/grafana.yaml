@@ -1,0 +1,15 @@
+- name: Create Monitoring namespace
+  kubernetes.core.k8s:
+    name: monitoring
+    kind: Namespace
+    state: present
+
+- name: Install Prometheus Stack (includes Grafana)
+  kubernetes.core.helm:
+    name: kube-prometheus-stack
+    chart_ref: kube-prometheus-stack
+    release_namespace: monitoring
+    chart_repo_url: https://prometheus-community.github.io/helm-charts # ИСПРАВЛЕНО
+    values:
+      grafana:
+        adminPassword: REDACTED_SECRET # Смени потом!

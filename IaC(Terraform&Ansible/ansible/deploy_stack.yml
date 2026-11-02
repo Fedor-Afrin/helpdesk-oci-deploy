@@ -1,0 +1,123 @@
+---
+- name: Full Stack Deployment (Apps + Certs)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    email: "REDACTED_EMAIL"
+    domain_name: "fedor-afrin.org"
+
+  tasks:
+    # --- БЛОК 1: СЕРТИФИКАЦИЯ ---
+    # - name: 1. Create Cert-Manager Namespace
+    #   kubernetes.core.k8s:
+    #     name: cert-manager
+    #     kind: Namespace
+    #     state: present
+
+    - name: 2. Install Cert-Manager via Helm
+      kubernetes.core.helm:
+        name: cert-manager
+        chart_ref: cert-manager
+        wait: true
+        create_namespace: true
+        release_namespace: cert-manager
+        chart_repo_url: https://charts.jetstack.io
+        chart_version: "v1.13.3"
+        values:
+          installCRDs: true
+
+    # - name: 3. Wait for Cert-Manager
+    #   ansible.builtin.pause:
+    #     seconds: 30
+
+    - name: 4. Create ClusterIssuer
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt-prod
+          spec:
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              email: "{{ email }}"
+              privateKeySecretRef:
+                name: letsencrypt-prod
+              solvers:
+                - http01:
+                    ingress:
+                      class: traefik
+
+    # --- БЛОК 2: ПРИЛОЖЕНИЯ ---
+    - name: 5. Install ArgoCD
+      include_tasks: argocd.yaml
+
+    - name: 6. Install Monitoring (Grafana)
+      include_tasks: grafana.yaml
+
+    - name: 7. Register Helpdesk App
+      include_tasks: helpdesk.yaml
+
+    - name: 8. Install Kubernetes Dashboard
+      include_tasks: k8s_dashboard.yaml
+
+    # --- БЛОК 3: INGRESS (Публикация) ---
+
+    - name: 9.1 Apply Helpdesk Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: helpdesk-ingress
+            namespace: default
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt-prod"
+              kubernetes.io/ingress.class: "traefik"
+          spec:
+            tls:
+              - hosts: ["helpdesk.{{ domain_name }}"]
+                secretName: helpdesk-tls
+            rules:
+              - host: "helpdesk.{{ domain_name }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: helpdesk-app-frontend-svc
+                          port:
+                            number: 80
+
+    - name: 9.2 Apply Grafana Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: grafana-ingress
+            namespace: monitoring
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt-prod"
+              kubernetes.io/ingress.class: "traefik"
+          spec:
+            tls:
+              - hosts: ["grafana.{{ domain_name }}"]
+                secretName: grafana-tls
+            rules:
+              - host: "grafana.{{ domain_name }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: kube-prometheus-stack-grafana
+                          port:
+                            number: 80

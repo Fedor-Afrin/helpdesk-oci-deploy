@@ -1,0 +1,27 @@
+- name: Apply Helpdesk ArgoCD Application
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: helpdesk-app
+        namespace: argocd # Сам ресурс Application живет в неймспейсе ArgoCD
+      spec:
+        project: default
+        source:
+          repoURL: https://github.com/Fedor-Afrin/helpdesk-oci-deploy.git
+          targetRevision: main
+          path: charts/helpdesk-app
+          helm:
+            valueFiles:
+              - values.yaml
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: default # А вот приложение поедет в default
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+          syncOptions:
+            - CreateNamespace=true
