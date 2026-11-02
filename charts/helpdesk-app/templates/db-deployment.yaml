@@ -34,7 +34,10 @@ spec:
             - name: POSTGRES_DB
               value: "helpdesk"
             - name: POSTGRES_PASSWORD
-              value: "REDACTED_SECRET" # Позже вынесем в Secrets!
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-db-secrets
+                  key: postgres_password
           volumeMounts:
             - name: db-storage
               mountPath: /var/lib/postgresql/data

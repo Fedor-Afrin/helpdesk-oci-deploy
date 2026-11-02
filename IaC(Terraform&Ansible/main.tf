@@ -9,14 +9,15 @@ terraform {
     }
   }
 
-  backend "oci" {
-    bucket    = "tfstate"
-    namespace = "axm70tntbzcm"
+  # Remote state backend example.
+  # Configure your own values locally; do not publish account-specific data.
+  #
+  # backend "oci" {
+  #   bucket    = "YOUR_TFSTATE_BUCKET"
+  #   namespace = "YOUR_OBJECT_STORAGE_NAMESPACE"
+  # }
 
-
-  }
-
-  # backend "local" {
+# backend "local" {
   #   path = "errored.tfstate"
   # }
 

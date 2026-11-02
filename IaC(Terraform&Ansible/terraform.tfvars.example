@@ -1,0 +1,13 @@
+# Replace these placeholders with your own OCI configuration.
+# Do not commit the real terraform.tfvars file.
+
+tenancy_ocid     = "YOUR_TENANCY_OCID"
+user_ocid        = "YOUR_USER_OCID"
+fingerprint      = "YOUR_API_KEY_FINGERPRINT"
+region           = "YOUR_OCI_REGION"
+
+private_key_path = "/path/to/your/oci_api_key.pem"
+
+compartment_ocid = "YOUR_COMPARTMENT_OCID"
+
+ssh_public_key    = "YOUR_SSH_PUBLIC_KEY"

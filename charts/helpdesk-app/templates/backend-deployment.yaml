@@ -25,8 +25,17 @@ spec:
               memory: {{ .Values.backend.limits_memory | default "256Mi" }}
 
           env:
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-app-secrets
+                  key: admin_password
+
             - name: DATABASE_URL
-              value: "postgresql://postgres:REDACTED_SECRET@{{ .Release.Name }}-db-svc:5432/helpdesk"
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-db-secrets
+                  key: database_url
 
             # Секреты из helpdesk-oci-secrets
             - name: OCI_ACCESS_KEY

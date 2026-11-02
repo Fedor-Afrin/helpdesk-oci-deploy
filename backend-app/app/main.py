@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from app.database import engine, Base, SessionLocal
 from app.routers import auth, tickets
@@ -17,10 +18,10 @@ def create_default_admin():
     if not crud.get_user_by_username(db, "admin"):
         # Добавляем is_staff=True, чтобы админ тоже считался сотрудником
         admin_user = schemas.UserCreate(
-            username="admin", 
-            password="REDACTED_SECRET", 
+            username="admin",
+            password=os.environ["ADMIN_PASSWORD"],
             is_admin=True,
-            is_staff=True  
+            is_staff=True
         )
         crud.create_user(db, admin_user)
         print("--- ADMIN / STAFF CREATED ---")

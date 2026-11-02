@@ -18,6 +18,7 @@ frontend:
   limits_memory: "128Mi"
   containerPort: 5000
   serviceType: LoadBalancer
+  loadBalancerSubnetOCID: ""
 # Database для PostgreSQL
 database:
   image: postgres:15-alpine

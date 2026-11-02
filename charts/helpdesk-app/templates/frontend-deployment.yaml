@@ -30,6 +30,12 @@ spec:
             failureThreshold: 3
 
           env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-app-secrets
+                  key: secret_key
+
             - name: BACKEND_URL
               value: "http://{{ .Release.Name }}-backend-svc:8000"
 
@@ -58,7 +64,9 @@ metadata:
   annotations:
     # Настройки Load Balancer
     oci.oraclecloud.com/load-balancer-type: "lb"
-    service.beta.kubernetes.io/oci-load-balancer-subnet1: "REDACTED_OCID"
+    {{- with .Values.frontend.loadBalancerSubnetOCID }}
+    service.beta.kubernetes.io/oci-load-balancer-subnet1: {{ . | quote }}
+    {{- end }}
 
     # Health check
     service.beta.kubernetes.io/oci-load-balancer-health-check-path: "/login"

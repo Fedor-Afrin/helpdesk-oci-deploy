@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import requests
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'REDACTED_SECRET')
+app.secret_key = os.environ['SECRET_KEY']
 
 # Получаем URL бэкенда
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
